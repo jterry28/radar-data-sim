@@ -34,4 +34,5 @@ services:
       KAFKA_JMX_HOSTNAME: "localhost"
       KAFKA_JMX_PORT: 31001
       KAFKA_LOG4J_LOGGERS: org.apache.zookeeper=INFO,org.apache.kafka=INFO,kafka=INFO,kafka.cluster=INFO,kafka.controller=INFO,kafka.coordinator=INFO,kafka.log=INFO,kafka.server=INFO,kafka.zookeeper=INFO,state.change.logger=INFO
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 30000
     restart: always

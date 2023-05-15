@@ -10,21 +10,9 @@ import scala.util.Try
 object JsoniterCodecToKafka {
 
   def serializer[T](implicit codec: JsonValueCodec[T]): Serializer[IO, T] =
-    Serializer.lift { t =>
-      IO.fromTry {
-        Try {
-          writeToString(t).getBytes(StandardCharsets.UTF_8)
-        }
-      }
-    }
+    Serializer.lift(t => IO(writeToString(t).getBytes(StandardCharsets.UTF_8)))
 
   def deserializer[T](implicit codec: JsonValueCodec[T]): Deserializer[IO, T] =
-    Deserializer.lift { data =>
-      IO.fromTry {
-        Try {
-          readFromString[T](new String(data, StandardCharsets.UTF_8))
-        }
-      }
-    }
+    Deserializer.lift(data => IO(readFromString[T](new String(data, StandardCharsets.UTF_8))))
 
 }

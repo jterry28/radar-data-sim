@@ -5,6 +5,7 @@ import com.terrycode.radar.sim.model.FlyingObject.*
 
 import java.time.{Duration, Instant}
 import java.util.UUID
+import scala.concurrent.duration.*
 import scala.util.Random
 
 case class FlyingObject(name           : String,
@@ -15,25 +16,41 @@ case class FlyingObject(name           : String,
                         knots          : Float,
                         courseDeg      : Float) {
 
-  def getCurrentPosition(currentTime: Instant): (Float, Float) = {
-    val hoursTraveled = Duration.between(initializedTime, currentTime).getSeconds / 3600f
-    val bearing       = Math.toRadians(courseDeg)
-    val distance      = knots * hoursTraveled * kmPerNM
+  def getCurrentPosition(currentTime: Instant, timeDilation: Long): (Float, Float) = {
+    val timeElapsed = FiniteDuration(Duration.between(initializedTime, currentTime).getSeconds, SECONDS) * timeDilation
+    getCurrentPosition(timeElapsed)
+  }
 
+  def getCurrentPosition(elapsedDuration: FiniteDuration): (Float, Float) = {
+    val bearing       = Math.toRadians(courseDeg)
+    val hoursTraveled = elapsedDuration.toSeconds / 3600f
+    val distanceRatio = knots * hoursTraveled * kmPerNM / radius
     // Haversine Formula
-    val lat  = Math.toRadians(initialLat)
-    val lon  = Math.toRadians(initialLon)
-    val lat2 = Math.toDegrees(Math.asin(Math.sin(lat) * Math.cos(distance / radius) + Math.cos(Math.toRadians(lat))
-      * Math.sin(distance / radius) * Math.cos(bearing)))
-    val lon2 = Math.toDegrees(lon + Math.atan2(Math.sin(bearing) * Math.sin(distance / radius) * Math.cos(lat),
-                                               Math.cos(distance / radius) - Math.sin(lat) * Math.sin(lat2)))
-    (lat2.toFloat, lon2.toFloat)
+    val lat           = Math.toRadians(initialLat)
+    val lon           = Math.toRadians(initialLon)
+    val distRatioCos  = Math.cos(distanceRatio)
+    val distRatioSin  = Math.sin(distanceRatio)
+    val sinLat        = Math.sin(lat)
+    val cosLat        = Math.cos(lat)
+
+    val lat2 = Math.toDegrees(Math.asin((sinLat * distRatioCos) + (cosLat * distRatioSin * Math.cos(bearing))))
+    val lon2 = Math.toDegrees(lon + Math.atan2(Math.sin(bearing) * distRatioSin * cosLat,
+                                               distRatioCos - sinLat * Math.sin(lat2)))
+    (normalizeLat(lat2).toFloat, normalizeLon(lon2).toFloat)
+  }
+
+  private def normalizeLon(lon: Double): Double = {
+    (lon % 360 + 540) % 360 - 180
+  }
+
+  private def normalizeLat(lat: Double): Double = {
+    (lat % 180 + 270) % 180 - 90
   }
 
 }
 
 object FlyingObject {
-  private val radius  = 6378.1370 //Radius of the Earth
+  private val radius  = 6378.1370 // Radius of the Earth kilometers
   private val kmPerNM = 1.852
 
   def withinBounds(box: BoundingBox, initializedTime: Instant): FlyingObject = {

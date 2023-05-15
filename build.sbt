@@ -16,12 +16,13 @@ lazy val simulation = (project in file ("simulation"))
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-val circeVersion  = "0.14.5"
 val fs2Version    = "3.0.0"
 val http4sVersion = "0.23.18"
 val tapirVersion  = "1.3.0"
 
 lazy val deps = Seq(
+  "org.typelevel" %% "cats-effect" % "3.5.0",
+
   "com.github.fd4s" %% "fs2-kafka" % fs2Version,
 
   "org.http4s" %% "http4s-ember-server" % http4sVersion,
@@ -32,7 +33,6 @@ lazy val deps = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % tapirVersion,
   "com.softwaremill.sttp.tapir" %% "tapir-prometheus-metrics" % tapirVersion,
   "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % tapirVersion,
 
   "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % "1.2.12",
   "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.23.0",
