@@ -1,6 +1,6 @@
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.3.0-RC5"
+ThisBuild / scalaVersion := "3.3.0-RC6"
 
 lazy val root = (project in file("."))
   .aggregate(simulation)
@@ -16,14 +16,16 @@ lazy val simulation = (project in file ("simulation"))
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-val fs2Version    = "3.0.0"
+val fs2Version = "3.7.0"
 val http4sVersion = "0.23.18"
 val tapirVersion  = "1.3.0"
 
 lazy val deps = Seq(
   "org.typelevel" %% "cats-effect" % "3.5.0",
 
-  "com.github.fd4s" %% "fs2-kafka" % fs2Version,
+  "co.fs2" %% "fs2-core" % fs2Version,
+  "co.fs2" %% "fs2-io" % fs2Version,
+  "com.github.fd4s" %% "fs2-kafka" % "3.0.1",
 
   "org.http4s" %% "http4s-ember-server" % http4sVersion,
   "org.http4s" %% "http4s-ember-client" % http4sVersion,

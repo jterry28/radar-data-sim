@@ -1,6 +1,7 @@
 package com.terrycode.radar.sim.model
 
 import com.terrycode.radar.sim.model.Radar.*
+import com.github.plokhotnyuk.rtree2d.core.{RTree, RTreeEntry}
 
 import scala.concurrent.duration.*
 import scala.util.Random
@@ -42,6 +43,12 @@ final class Radar(val name            : String,
 
 object Radar {
   private def nauticalMilesToDegrees(miles: Float) = miles / 60f // Not accurate for longitude
-
+  
   case class ScanArea(minLon: Float, minLat: Float, maxLon: Float, maxLat: Float)
+  
+  extension[A] (tree: RTree[A]) {
+    def searchAll(area: ScanArea): Seq[RTreeEntry[A]] = {
+      tree.searchAll(area.minLon, area.minLat, area.maxLon, area.maxLat)
+    }
+  }
 }

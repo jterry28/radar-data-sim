@@ -16,12 +16,12 @@ case class FlyingObject(name           : String,
                         knots          : Float,
                         courseDeg      : Float) {
 
-  def getCurrentPosition(currentTime: Instant, timeDilation: Long): (Float, Float) = {
+  def currentPosition(currentTime: Instant, timeDilation: Long): (Float, Float) = {
     val timeElapsed = FiniteDuration(Duration.between(initializedTime, currentTime).getSeconds, SECONDS) * timeDilation
-    getCurrentPosition(timeElapsed)
+    currentPosition(timeElapsed)
   }
 
-  def getCurrentPosition(elapsedDuration: FiniteDuration): (Float, Float) = {
+  def currentPosition(elapsedDuration: FiniteDuration): (Float, Float) = {
     val bearing       = Math.toRadians(courseDeg)
     val hoursTraveled = elapsedDuration.toSeconds / 3600f
     val distanceRatio = knots * hoursTraveled * kmPerNM / radius

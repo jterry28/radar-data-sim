@@ -6,11 +6,11 @@ import scala.jdk.CollectionConverters.*
 
 object EntityDetectionEventTopic {
   val name           : String                    = "radar.entity.detection"
-  val topicProperties: NewTopic                  = new NewTopic(name, 10, 1.toShort)
+  val topicProperties: NewTopic                  = new NewTopic(name, 16, 1.toShort)
     .configs(
       Map (
-        "compression.type" -> "gzip",
-        "retention.bytes" -> "104857600", // 100MB
+        "compression.type" -> "lz4",
+        "retention.bytes" -> "4294967296", // 4GB
         "retention.ms" -> "60000", // Low constraint for testing in local environment
         "segment.ms" -> "30000"
   ).asJava)
