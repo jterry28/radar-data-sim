@@ -1,6 +1,5 @@
 package com.terrycode.radar.sim.stream
 
-import cats.Parallel
 import cats.effect.kernel.{Concurrent, Ref, Temporal}
 import com.github.plokhotnyuk.rtree2d.core.*
 import com.github.plokhotnyuk.rtree2d.core.SphericalEarth.*
@@ -12,10 +11,10 @@ import scala.concurrent.duration.*
 final class FlyersTree[F[_] : Concurrent](clock: VirtualClock, numFlyers: Int) {
 
   private val flyers = (0 to numFlyers).view
-    .map(_ => FlyingObject.withinBounds(BoundingBox.US_LOWER_48, clock.referenceTime))
+    .map(_ => FlyingEntity.withinBounds(BoundingBox.US_LOWER_48, clock.referenceTime))
     .toArray
 
-  val treeRef: F[Ref[F, RTree[FlyingObject]]] = Ref.of(RTree(flyers.view.map(f => entry(f.initialLat, f.initialLon, f))))
+  val treeRef: F[Ref[F, RTree[FlyingEntity]]] = Ref.of(RTree(flyers.view.map(f => entry(f.initialLat, f.initialLon, f))))
 
   def makeStream(implicit ev: Temporal[F]): Stream[F, Unit] = {
     Stream.eval(treeRef)

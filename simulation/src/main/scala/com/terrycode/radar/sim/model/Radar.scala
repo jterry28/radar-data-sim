@@ -37,15 +37,15 @@ final class Radar(val name            : String,
     }
   }
 
-  def scanDelay: Duration = (scanRate / scanChunks.length) + Duration(Random.between(-0.1f, 0.1f), SECONDS) // jitter
+  def scanDelay: Duration = (scanRate / scanChunks.length) + Duration(Random.between(-0.01f, 0.01f), SECONDS) // jitter
 
 }
 
 object Radar {
   private def nauticalMilesToDegrees(miles: Float) = miles / 60f // Not accurate for longitude
-  
+
   case class ScanArea(minLon: Float, minLat: Float, maxLon: Float, maxLat: Float)
-  
+
   extension[A] (tree: RTree[A]) {
     def searchAll(area: ScanArea): Seq[RTreeEntry[A]] = {
       tree.searchAll(area.minLon, area.minLat, area.maxLon, area.maxLat)

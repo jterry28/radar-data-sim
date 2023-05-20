@@ -36,3 +36,35 @@ services:
       KAFKA_LOG4J_LOGGERS: org.apache.zookeeper=INFO,org.apache.kafka=INFO,kafka=INFO,kafka.cluster=INFO,kafka.controller=INFO,kafka.coordinator=INFO,kafka.log=INFO,kafka.server=INFO,kafka.zookeeper=INFO,state.change.logger=INFO
       KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 30000
     restart: always
+
+  jobmanager:
+    image: local/flink
+    build:
+      context: .
+      dockerfile: flink.dockerfile
+      network: host
+    container_name: jobmanager
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+
+  taskmanager:
+    image: local/flink
+    build:
+      context: .
+      dockerfile: flink.dockerfile
+      network: host
+    container_name: taskmanager
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 1

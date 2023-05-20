@@ -8,18 +8,19 @@ import com.github.plokhotnyuk.rtree2d.core.SphericalEarth.*
 import com.terrycode.radar.sim.file.*
 import com.terrycode.radar.sim.model.*
 import com.terrycode.radar.topic.*
+import com.terrycode.radar.topic.JsoniterCodecToKafka.given
 import fs2.*
 import fs2.io.file.Path
 import fs2.kafka.*
 import org.apache.kafka.common.errors.TopicExistsException
 
-import java.time.ZoneOffset
+import java.time.{LocalDateTime, ZoneOffset}
 import scala.concurrent.duration.*
 
-final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingObject]]],
+final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingEntity]]],
                        clock               : VirtualClock,
                        kafkaBootstrapServer: String) {
-  KafkaAdminClient.resource[IO](AdminClientSettings.apply(kafkaBootstrapServer))
+  KafkaAdminClient.resource[IO](AdminClientSettings(kafkaBootstrapServer))
     .use(c => c.createTopic(EntityDetectionEventTopic.topicProperties))
     .recover {
       case _: TopicExistsException => IO.unit
@@ -44,7 +45,7 @@ final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingObject]]],
       }
 
       val producer = KafkaProducer.pipe {
-        ProducerSettings(Serializer[IO, String], JsoniterCodecToKafka.serializer[EntityDetectionEvent])
+        ProducerSettings(Serializer[IO, String], EntityDetectionEvent.codec)
           .withBootstrapServers(kafkaBootstrapServer)
           .withBatchSize(128000) // Send only once batch size or linger limit is reached
           .withLinger(20.millis)
@@ -55,7 +56,6 @@ final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingObject]]],
           .flatMap { ref =>
             stream.parEvalMapUnorderedUnbounded { radar =>
               val (now, duration) = clock.currentScaledTime
-              val zonedNow        = now.atZone(ZoneOffset.UTC)
               val scan            = radar.nextScanArea()
               ref.get
                 .map(_.searchAll(scan))
@@ -64,7 +64,7 @@ final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingObject]]],
                     val (lat, lon) = entry.value.currentPosition(duration)
                     ProducerRecord(EntityDetectionEventTopic.name,
                                    entry.value.name,
-                                   EntityDetectionEvent(radar.name, zonedNow, entry.value.name, lat, lon))
+                                   EntityDetectionEvent(radar.name, LocalDateTime.ofInstant(now, ZoneOffset.UTC), entry.value.name, lat, lon))
                   }
                 }.map(ProducerRecords(_))
             }.through(producer)
