@@ -1,7 +1,6 @@
 package com.terrycode.radar.math
 
 import com.terrycode.radar.math.TimeUtils.*
-import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration.FiniteDuration
 import scala.math.*
@@ -27,10 +26,11 @@ object HaversineFormulae {
     val sinLat        = sin(latRad)
     val cosLat        = cos(latRad)
 
-    val lat2 = asin((sinLat * distRatioCos) + (cosLat * distRatioSin * cos(bearing))).toDegrees
+    val lat2 = asin((sinLat * distRatioCos) + (cosLat * distRatioSin * cos(bearing)))
     val lon2 = lonRad + atan2(sin(bearing) * distRatioSin * cosLat,
-                              distRatioCos - sinLat * sin(lat2)).toDegrees
-    (normalizeLat(lat2).toFloat, normalizeLon(lon2).toFloat)
+                              distRatioCos - sinLat * sin(lat2))
+
+    (normalizeLat(lat2.toDegrees).toFloat, normalizeLon(lon2.toDegrees).toFloat)
   }
 
   def calculateDistanceNauticalMiles(lat1: Float, lon1: Float, lat2: Float, lon2: Float): Float = {

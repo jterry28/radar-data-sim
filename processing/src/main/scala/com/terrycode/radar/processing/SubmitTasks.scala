@@ -1,32 +1,25 @@
 package com.terrycode.radar.processing
 
 import cats.effect.unsafe.implicits.global
-import cats.effect.{ExitCode, IO, IOApp}
-import com.terrycode.radar.math.HaversineFormulae
+import cats.effect.IO
 import com.terrycode.radar.topic.{EntityDetectionEvent, EntityDetectionEventTopic, EntitySpeed, EntitySpeedTopic}
-import com.typesafe.scalalogging.Logger
 import fs2.kafka.{AdminClientSettings, KafkaAdminClient}
 import org.apache.flink.api.common.JobExecutionResult
-import org.apache.flink.api.common.accumulators.{AverageAccumulator, ListAccumulator}
 import org.apache.flink.api.common.eventtime.WatermarkStrategy
-import org.apache.flink.api.common.functions.AggregateFunction
-import org.apache.flink.api.common.serialization.SerializationSchema
-import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.configuration.{Configuration, JobManagerOptions, RestOptions}
 import org.apache.flink.connector.base.DeliveryGuarantee
 import org.apache.flink.connector.kafka.sink.{KafkaRecordSerializationSchema, KafkaSink}
 import org.apache.flink.connector.kafka.source.KafkaSource
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
-import org.apache.flink.streaming.api.datastream.{DataStream, SingleOutputStreamOperator}
+import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.errors.TopicExistsException
 
 import java.lang
-import java.nio.charset.{Charset, StandardCharsets}
-import java.time.{LocalDateTime, ZoneOffset, Duration as JDuration}
+import java.nio.charset.StandardCharsets
+import java.time.ZoneOffset
 import scala.concurrent.duration.*
 import scala.jdk.DurationConverters.*
 
@@ -66,6 +59,8 @@ object SubmitTasks {
       .keyBy(_.entityName)
       .window(SlidingEventTimeWindows.of(Time.seconds(20), Time.seconds(10)))
       .aggregate(KnotsAggregator())
+      .filter(_.isPresent)
+      .map(_.get)
 
     val sink = KafkaSink.builder[EntitySpeed]
       .setBootstrapServers(kafkaBootstrapServer)
