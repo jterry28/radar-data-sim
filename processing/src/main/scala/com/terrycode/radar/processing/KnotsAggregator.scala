@@ -25,7 +25,6 @@ final class KnotsAggregator extends AggregateFunction[EntityDetectionEvent, List
 
   override def getResult(accumulator: ListAccumulator[EntityDetectionEvent]): Optional[EntitySpeed] = {
     if (accumulator.getLocalValue.isEmpty || accumulator.getLocalValue.size() == 1) return Optional.empty()
-
     val list = accumulator.getLocalValue.asScala.sortBy(_.capturedTime)
     val totalDistance = Stream
       .emits(list)
@@ -42,10 +41,12 @@ final class KnotsAggregator extends AggregateFunction[EntityDetectionEvent, List
     val duration   = JDuration.between(e1.capturedTime, e2.capturedTime).toHoursFractional
     val nmPerHours = totalDistance / duration
 
+    val capturedSites = list.map(_.radarId).distinct.toArray
+
     if (nmPerHours < 0.0) {
-      log.info(s"$nmPerHours, $duration, $list")
+      log.warn(s"Invalid speed: $nmPerHours, $duration, $list")
     }
-    Optional.of(EntitySpeed(e2.entityName, e2.capturedTime, nmPerHours))
+    Optional.of(EntitySpeed(e2.entityName, e2.capturedTime, nmPerHours, capturedSites))
   }
 
   override def merge(a: ListAccumulator[EntityDetectionEvent],

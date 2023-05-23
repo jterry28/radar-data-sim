@@ -7,7 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 
 import java.time.LocalDateTime
 
-case class EntitySpeed(entityName: String, capturedTime: LocalDateTime, averageKnots: Float)
+case class EntitySpeed(entityName: String, capturedTime: LocalDateTime, averageKnots: Float, capturedBy: Array[String])
 
 object EntitySpeed {
   given codec: JsonValueCodec[EntitySpeed] = JsonCodecMaker.make[EntitySpeed]

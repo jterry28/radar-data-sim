@@ -18,7 +18,7 @@ import java.time.{LocalDateTime, ZoneOffset}
 import scala.concurrent.duration.*
 
 final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingEntity]]],
-                       clock               : VirtualClock,
+                       clock               : VirtualClock[IO],
                        kafkaBootstrapServer: String) {
   KafkaAdminClient.resource[IO](AdminClientSettings(kafkaBootstrapServer))
     .use(c => c.createTopic(EntityDetectionEventTopic.topicProperties))
@@ -37,11 +37,11 @@ final class ScanStream(treeRef             : IO[Ref[IO, RTree[FlyingEntity]]],
             .map(ArsrGeoJson.toRadar)
         }
         .parEvalMapUnorderedUnbounded { radar =>
-          IO.sleep(radar.initialDelay).flatMap(_ => queue.offer(radar))
+          clock.scaledSleep(radar.initialDelay).flatMap(_ => queue.offer(radar))
         }
 
       val requeuePipe: Pipe[IO, Radar, Unit] = stream => {
-        stream.parEvalMapUnorderedUnbounded(r => IO.sleep(r.scanDelay).flatMap(_ => queue.offer(r)))
+        stream.parEvalMapUnorderedUnbounded(r => clock.scaledSleep(r.scanDelay).flatMap(_ => queue.offer(r)))
       }
 
       val producer = KafkaProducer.pipe {

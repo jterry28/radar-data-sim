@@ -26,7 +26,7 @@ import scala.jdk.DurationConverters.*
 object SubmitTasks {
 
   @main
-  def run(): JobExecutionResult = {
+  def submit(): JobExecutionResult = {
     val kafkaBootstrapServer   = sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
     val flinkJobManagerAddress = sys.env.getOrElse("FLINK_JOB_MANAGER_ADDRESS", "localhost")
     val flinkJobManagerPort    = sys.env.getOrElse("FLINK_JOB_MANAGER_PORT", "8081")
@@ -52,12 +52,13 @@ object SubmitTasks {
 
     val watermarkStrategy = WatermarkStrategy
       .forBoundedOutOfOrderness[EntityDetectionEvent](10.seconds.toJava)
+      .withIdleness(10.seconds.toJava)
       .withTimestampAssigner((event, _) => event.capturedTime.toInstant(ZoneOffset.UTC).toEpochMilli)
 
     val stream: DataStream[EntitySpeed] = env
       .fromSource(source, watermarkStrategy, "kafka")
       .keyBy(_.entityName)
-      .window(SlidingEventTimeWindows.of(Time.seconds(20), Time.seconds(10)))
+      .window(SlidingEventTimeWindows.of(Time.seconds(15), Time.seconds(10)))
       .aggregate(KnotsAggregator())
       .filter(_.isPresent)
       .map(_.get)

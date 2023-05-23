@@ -25,7 +25,7 @@ final class Radar(val name            : String,
                     ScanArea(minLon, lat, lon, maxLat))
   }
 
-  lazy val initialDelay: FiniteDuration = Duration(Random.between(0, scanRate.toMillis), MILLISECONDS)
+  lazy val initialDelay: FiniteDuration = FiniteDuration(Random.between(0, scanRate.toMillis), MILLISECONDS)
 
   private var currentScanChunk = 0
 
@@ -37,7 +37,7 @@ final class Radar(val name            : String,
     }
   }
 
-  def scanDelay: Duration = (scanRate / scanChunks.length) + Duration(Random.between(-0.01f, 0.01f), SECONDS) // jitter
+  def scanDelay: FiniteDuration = (scanRate / scanChunks.length) + FiniteDuration(Random.between(-10, 10), MILLISECONDS) // jitter
 
 }
 
